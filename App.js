@@ -8,128 +8,115 @@ import {
   Animated,
 } from 'react-native';
 
-const QUADRADOS = [0, 1, 2, 3, 4, 5, 6, 7, 8]; // IDs dos quadrados (0-8)
+// Array que contém os IDs dos quadrados, representando as posições dos quadrados
+const QUADRADOS = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
 const Jogo = () => {
-  var [sequencia, setSequencia] = useState([]);
-  var [sequenciaJogador, setSequenciaJogador] = useState([]);
-  const [nivel, setNivel] = useState('fácil'); // fácil, médio, difícil
-  const [jogando, setJogando] = useState(false);
-  const [exibindoSequencia, setExibindoSequencia] = useState(false);
-  const [tempoPiscar, setTempoPiscar] = useState(1000); // Velocidade do piscar
-  const [animacoes, setAnimacoes] = useState({});
-  const [rodada, setRodada] = useState(0);
+  // Estados do jogo
+  var [sequencia, setSequencia] = useState([]); // Sequência aleatória gerada para o jogador
+  var [sequenciaJogador, setSequenciaJogador] = useState([]); // Sequência de cliques do jogador
+  const [nivel, setNivel] = useState('fácil'); // Nível do jogo (fácil, médio, difícil)
+  const [jogando, setJogando] = useState(false); // Indica se o jogador pode interagir com o jogo
+  const [exibindoSequencia, setExibindoSequencia] = useState(false); // Indica se a sequência está sendo exibida
+  const [tempoPiscar, setTempoPiscar] = useState(1000); // Velocidade do piscar (em milissegundos)
+  const [animacoes, setAnimacoes] = useState({}); // Armazena as animações dos quadrados
+  const [rodada, setRodada] = useState(0); // Controla a rodada atual
 
+  // Atualiza o tempo de piscar baseado no nível do jogo
   useEffect(() => {
     if (nivel === 'fácil') setTempoPiscar(1000);
     if (nivel === 'médio') setTempoPiscar(700);
     if (nivel === 'difícil') setTempoPiscar(500);
   }, [nivel]);
 
+  // Função que inicia o jogo, reseta os estados e começa uma nova rodada
   const iniciarJogo = () => {
-    setSequencia([]);
-    setSequenciaJogador([]);
-    setAnimacoes({});
-    setJogando(false);
-    setRodada(0);
-    gerarSequencia();
+    setSequencia([]); // Reseta a sequência gerada
+    setSequenciaJogador([]); // Reseta a sequência do jogador
+    setAnimacoes({}); // Reseta as animações
+    setJogando(false); // Desabilita a interação do jogador
+    setRodada(0); // Reseta o contador de rodadas
+    gerarSequencia(); // Gera uma nova sequência aleatória
   };
 
+  // Função que gera uma nova sequência de quadrados
   const gerarSequencia = () => {
-    setJogando(false); // Desabilita cliques enquanto a nova sequência é exibida
+    setJogando(false); // Desabilita cliques enquanto a sequência está sendo exibida
     setExibindoSequencia(true); // Indica que a sequência está sendo exibida
-    setSequenciaJogador([]); // Reinicia a sequência do jogador para a nova rodada
-    const novoQuadrado = Math.floor(Math.random() * QUADRADOS.length);
-    const novaSequencia = [...sequencia, novoQuadrado];
-    setSequencia(novaSequencia);
-    setRodada((prevRodada) => prevRodada + 1);
-    exibirSequencia(novaSequencia);
+    setSequenciaJogador([]); // Reseta a sequência de cliques do jogador
+    const novoQuadrado = Math.floor(Math.random() * QUADRADOS.length); // Gera um quadrado aleatório
+    const novaSequencia = [...sequencia, novoQuadrado]; // Adiciona o novo quadrado à sequência
+    setSequencia(novaSequencia); // Atualiza a sequência no estado
+    setRodada((prevRodada) => prevRodada + 1); // Incrementa o contador de rodadas
+    exibirSequencia(novaSequencia); // Inicia a exibição da sequência
   };
 
+  // Função que exibe a sequência de quadrados piscando
   const exibirSequencia = (sequencia) => {
     let i = 0;
     const intervalo = setInterval(() => {
       if (i < sequencia.length) {
-        piscarQuadrado(sequencia[i]);
-        i++;
+        piscarQuadrado(sequencia[i]); // Faz o quadrado piscar
+        i++; // Avança para o próximo quadrado na sequência
       } else {
-        clearInterval(intervalo);
-        setJogando(true); // Permite o jogador começar a clicar
+        clearInterval(intervalo); // Para o intervalo quando a sequência for exibida
+        setJogando(true); // Permite ao jogador clicar após a exibição
         setExibindoSequencia(false); // A sequência terminou de ser exibida
       }
-    }, tempoPiscar);
+    }, tempoPiscar); // A cada intervalo (tempoPiscar), o próximo quadrado é piscado
   };
 
+  // Função que anima o "piscar" de um quadrado específico
   const piscarQuadrado = (id) => {
-    const novaAnimacao = new Animated.Value(1);
-    setAnimacoes((prev) => ({ ...prev, [id]: novaAnimacao }));
+    const novaAnimacao = new Animated.Value(1); // Cria uma nova animação com valor inicial 1 (opacidade total)
+    setAnimacoes((prev) => ({ ...prev, [id]: novaAnimacao })); // Atualiza o estado com a animação do quadrado
 
+    // Cria a sequência de animações (fade in e fade out)
     Animated.sequence([
       Animated.timing(novaAnimacao, {
-        toValue: 0,
-        duration: tempoPiscar / 2,
+        toValue: 0, // Diminui a opacidade para 0 (desaparece)
+        duration: tempoPiscar / 2, // Meio do tempoPiscar
         useNativeDriver: true,
       }),
       Animated.timing(novaAnimacao, {
-        toValue: 1,
-        duration: tempoPiscar / 2,
+        toValue: 1, // Aumenta a opacidade de volta para 1 (aparece)
+        duration: tempoPiscar / 2, // Meio do tempoPiscar
         useNativeDriver: true,
       }),
-    ]).start();
+    ]).start(); // Inicia a animação
   };
 
+  // Função que verifica a sequência de cliques do jogador
   const verificarSequencia = (id) => {
-    console.log(sequencia)
-    if (!jogando || exibindoSequencia) return; // Impede cliques durante a exibição
+    console.log(sequencia); // Exibe a sequência gerada para depuração
+    if (!jogando || exibindoSequencia) return; // Impede cliques durante a exibição da sequência
 
-    const novoSequenciaJogador = [...sequenciaJogador, id];
-    setSequenciaJogador(novoSequenciaJogador);
+    const novoSequenciaJogador = [...sequenciaJogador, id]; // Adiciona o quadrado clicado à sequência do jogador
+    setSequenciaJogador(novoSequenciaJogador); // Atualiza a sequência do jogador no estado
 
-    const indiceAtual = novoSequenciaJogador.length - 1;
+    const indiceAtual = novoSequenciaJogador.length - 1; // Índice do quadrado clicado
 
+    // Verifica se o quadrado clicado é o esperado
     if (novoSequenciaJogador[indiceAtual] !== sequencia[indiceAtual]) {
-      // Sequência incorreta
-      setJogando(false);
+      // Se o jogador errou, o jogo reinicia
+      setJogando(false); // Desabilita a interação com o jogador
 
-      setSequencia([]);
-      setSequenciaJogador([]);
-      setAnimacoes({});
-      setJogando(false);
-      setRodada(0);
+      setSequencia([]); // Reseta a sequência
+      setSequenciaJogador([]); // Reseta a sequência do jogador
+      setAnimacoes({}); // Reseta as animações
+      setJogando(false); // Desabilita a interação novamente
+      setRodada(0); // Reseta o contador de rodadas
 
       console.log('Fim de Jogo!', `Você errou na rodada ${rodada}. Sua pontuação foi ${rodada - 1}`);
-      return;
+      return; // Fim de jogo
     }
 
-    // Verifica se o jogador completou a sequência atual
+    // Verifica se o jogador completou a sequência corretamente
     if (novoSequenciaJogador.length === sequencia.length) {
       setJogando(false); // Desabilita cliques antes de gerar a próxima sequência
-      setTimeout(gerarSequencia, 700); // Espera 1 segundo antes de exibir a próxima sequência
+      setTimeout(gerarSequencia, 700); // Gera uma nova sequência após um pequeno intervalo
     }
   };
-
-  const renderizarQuadrados = () => {
-    return QUADRADOS.map((id) => (
-      <TouchableOpacity
-        key={id}
-        style={styles.quadrado}
-        onPress={() => verificarSequencia(id)}
-        disabled={!jogando || exibindoSequencia} // Desabilita durante a exibição
-      >
-        <Animated.View
-          style={[
-            styles.quadradoInterno,
-            {
-              opacity: animacoes[id] ? animacoes[id] : 1,
-            },
-          ]}
-        >
-          <Text style={styles.textoQuadrado}>{id + 1}</Text>
-        </Animated.View>
-      </TouchableOpacity>
-    ));
-  };
-
   return (
     <View style={styles.container}>
       <Text style={styles.titulo}>Jogo Gênios</Text>
